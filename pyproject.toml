@@ -1,10 +1,12 @@
-[build-system]
-requires = ["setuptools"]
-build-backend = "setuptools.build_meta"
-
 [project]
-name = "file-converter"
+name = "tabular-convert"
 version = "0.1.0"
+description = "Universal tabular format converter"
+dependencies = [
+    "pandas",
+    "openpyxl",
+    "pyarrow"
+]
 
-[tool.setuptools.packages.find]
-where = ["src"]
+[project.scripts]
+convert = "file_converter.cli:main"

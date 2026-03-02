@@ -21,7 +21,17 @@ LOADERS = {
 
 def load_file(path: str) -> pd.DataFrame:
     path = Path(path)
-    loader = LOADERS.get(path.suffix.lower())
+
+    if not path.exists():
+        raise ValueError(f"Input file does not exist: {path}")
+
+    suffix = path.suffix.lower()
+    loader = LOADERS.get(suffix)
+
     if not loader:
-        raise ValueError(f"Unsupported file type: {path.suffix}")
+        supported = ", ".join(sorted(LOADERS.keys()))
+        raise ValueError(
+            f"Unsupported input format: {suffix}\nSupported: {supported}"
+        )
+
     return loader.load(path)
