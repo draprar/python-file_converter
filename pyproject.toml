@@ -1,7 +1,14 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
 [project]
 name = "tabular-convert"
 version = "0.1.0"
 description = "Universal tabular format converter"
+readme = "README.md"
+requires-python = ">=3.10"
+
 dependencies = [
     "pandas",
     "openpyxl",
@@ -10,3 +17,6 @@ dependencies = [
 
 [project.scripts]
 convert = "file_converter.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
