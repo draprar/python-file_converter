@@ -4,26 +4,27 @@ Universal CLI tool for converting tabular data into a unified Pandas DataFrame a
 
 ## Features
 
-- Supports input formats:
-  - CSV
-  - Excel (.xlsx, .xls)
-  - JSON
-  - Pickle
-  - Parquet
-- Unified DataFrame loading pipeline
-- Export to:
-  - CSV
-  - Parquet (default)
-- Optional:
-  - Dataset preview
-  - Drop empty columns
-- Project-based directory structure (`data/input`, `data/output`)
+- **Input formats**: CSV, Excel (.xlsx, .xls), JSON, Pickle, Parquet
+- **Output formats**: CSV, Parquet (default)
+- **Unified loading pipeline** via pandas
+- **Data preview** with `--preview`
+- **Clean empty columns** with `--drop-empty`
+- **Project-based directory structure**: `data/input/` and `data/output/`
+
+### ⚠️ Security Note: Pickle Format
+
+Pickle files can execute arbitrary code on deserialization. **Only load pickle files from trusted sources.**
+
+To enable pickle loading:
+```
+UNSAFE_PICKLE=1 convert data.pkl
+```
 
 ---
 
 ## Installation
 
-```bash
+```
 pip install .
 ```
 
@@ -35,7 +36,7 @@ pip install -e .
 
 ---
 
-## 
+## Usage
 
 Basic conversion (default export to Parquet):
 
@@ -90,10 +91,14 @@ Run tests:
 pytest
 ```
 
-CI runs automatically on push and pull requests.
+Tests are run automatically on GitHub Actions for every push and pull request to ensure code quality.
 
 ---
 
 ## License
 
 MIT License.
+
+## Author
+
+[Walery](https://github.com/draprar)
