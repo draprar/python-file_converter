@@ -1,4 +1,5 @@
 from pathlib import Path
+from typing import Union
 import pandas as pd
 
 from file_converter.loaders.csv_loader import CSVLoader
@@ -19,7 +20,19 @@ LOADERS = {
 }
 
 
-def load_file(path: str) -> pd.DataFrame:
+def load_file(path: Union[str, Path]) -> pd.DataFrame:
+    """
+    Load tabular data from a file into a pandas DataFrame.
+    
+    Args:
+        path: File path (str or Path object).
+        
+    Returns:
+        Loaded DataFrame.
+        
+    Raises:
+        ValueError: If file does not exist or format is unsupported.
+    """
     path = Path(path)
 
     if not path.exists():
