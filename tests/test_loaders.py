@@ -88,9 +88,15 @@ class TestJSONLoader:
         loader = JSONLoader()
         df = loader.load(file)
 
-        # Timestamp should remain string (not converted to datetime)
-        assert df["timestamp"].dtype == "object"  # string type
+        # Timestamp should remain text-like and must not be converted to datetime.
+        # Depending on pandas version/config, text columns may use object or StringDtype.
+        assert pd.api.types.is_string_dtype(df["timestamp"])
+        assert not pd.api.types.is_datetime64_any_dtype(df["timestamp"])
         assert isinstance(df["timestamp"].iloc[0], str)
+        assert list(df["timestamp"]) == [
+            "2024-01-15 10:00:00",
+            "2024-01-15 11:00:00",
+        ]
 
     def test_load_json_with_auto_datetime_enabled(self, tmp_path, monkeypatch):
         """Test that datetime parsing works when explicitly enabled."""
@@ -124,8 +130,9 @@ class TestJSONLoader:
         loader = JSONLoader()
         df = loader.load(file)
 
-        # runtime should stay as string
-        assert df["runtime"].dtype == "object"
+        # runtime should stay text-like and not be converted to datetime
+        assert pd.api.types.is_string_dtype(df["runtime"])
+        assert not pd.api.types.is_datetime64_any_dtype(df["runtime"])
         assert list(df["runtime"]) == ["120 mins", "invalid_date"]
 
 
