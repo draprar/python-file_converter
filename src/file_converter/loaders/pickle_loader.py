@@ -24,8 +24,6 @@ class PickleLoader(BaseLoader):
         obj = pd.read_pickle(path)  # nosec B301
 
         if not isinstance(obj, pd.DataFrame):
-            raise TypeError(
-                f"Expected pandas DataFrame, got {type(obj).__name__}"
-            )
+            raise TypeError(f"Expected pandas DataFrame, got {type(obj).__name__}")
 
         return cast(pd.DataFrame, obj)
