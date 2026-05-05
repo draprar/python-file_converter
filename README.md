@@ -31,14 +31,14 @@ UNSAFE_PICKLE=1 convert data.pkl
 
 ## Installation
 
+### For users
 ```
 pip install .
 ```
 
-Editable mode (recommended for development):
-
+### For development
 ```
-pip install -e .
+pip install -e ".[dev]"
 ```
 
 After installation, CLI command becomes available: `convert`
