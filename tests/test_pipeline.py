@@ -58,8 +58,8 @@ def test_load_error_message_lists_formats(tmp_path):
 
 def test_large_file_shows_loading_message(tmp_path, monkeypatch):
     """Test that files >100MB show loading message."""
-    import sys
     import io
+    import sys
 
     # Create a moderately sized CSV file
     # We'll mock the LARGE_FILE_THRESHOLD_MB to be smaller for testing
