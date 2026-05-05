@@ -1,8 +1,8 @@
+import sys
 from pathlib import Path
 from typing import Union
 
 import pandas as pd
-from tqdm import tqdm
 
 from file_converter.loaders.csv_loader import CSVLoader
 from file_converter.loaders.excel_loader import ExcelLoader
@@ -12,6 +12,9 @@ from file_converter.loaders.pickle_loader import PickleLoader
 
 # Default maximum file size: 1GB
 DEFAULT_MAX_FILE_SIZE = 1_000_000_000  # 1 GB in bytes
+
+# Show loading message for files larger than this threshold
+LARGE_FILE_THRESHOLD_MB = 100
 
 
 LOADERS = {
@@ -61,12 +64,9 @@ def load_file(path: Union[str, Path], max_size: int = DEFAULT_MAX_FILE_SIZE) -> 
         supported = ", ".join(sorted(LOADERS.keys()))
         raise ValueError(f"Unsupported input format: {suffix}\nSupported: {supported}")
 
-    # Show progress bar for large files (>100MB)
+    # Show loading message for large files
     file_size_mb = file_size / 1_000_000
-    if file_size_mb > 100:
-        print(f"Loading large file ({file_size_mb:.1f}MB)...")
-        with tqdm(total=file_size_mb, desc="Loading", unit="MB", unit_scale=False) as pbar:
-            # This is a placeholder for future enhancement
-            pbar.update(file_size_mb)
+    if file_size_mb > LARGE_FILE_THRESHOLD_MB:
+        print(f"Loading large file ({file_size_mb:.1f}MB)...", file=sys.stderr)
 
     return loader.load(path)
