@@ -203,3 +203,19 @@ class TestPickleLoader:
         df = loader.load(file)
 
         assert df.shape == (2, 1)
+
+    def test_pickle_non_dataframe_raises_error(self, tmp_path, monkeypatch):
+        """Test that pickle file with non-DataFrame object raises TypeError."""
+        import pickle
+
+        file = tmp_path / "not_df.pkl"
+        # Save a list instead of DataFrame
+        with open(file, "wb") as f:
+            pickle.dump([1, 2, 3], f)
+
+        monkeypatch.setenv("UNSAFE_PICKLE", "1")
+
+        loader = PickleLoader()
+
+        with pytest.raises(TypeError, match="Expected pandas DataFrame"):
+            loader.load(file)

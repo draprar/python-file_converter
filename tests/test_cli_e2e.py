@@ -182,3 +182,210 @@ class TestCLIErrorHandling:
 
         assert exit_code == 1
         assert "Error" in stderr
+
+    def test_create_output_directory_if_not_exists(self, sample_csv, tmp_path, monkeypatch):
+        """Test that output directory is created automatically."""
+        from file_converter.cli import main
+
+        monkeypatch.setattr("file_converter.cli.DATA_INPUT_DIR", sample_csv.parent)
+
+        # Nested directory that doesn't exist
+        output_dir = tmp_path / "nested" / "deep" / "output"
+        output_file = output_dir / "result.csv"
+
+        # Run CLI
+        monkeypatch.setattr("sys.argv", ["convert", str(sample_csv), str(output_file)])
+        exit_code = main()
+
+        assert exit_code == 0
+        assert output_dir.exists()
+        assert output_file.exists()
+
+
+class TestCLINewFeatures:
+    """Test new features added in refactoring."""
+
+    def test_empty_dataframe_warning(self, tmp_path, monkeypatch):
+        """Test that empty DataFrame shows warning."""
+        from file_converter.cli import main
+
+        # Create empty CSV
+        empty_csv = tmp_path / "empty.csv"
+        empty_csv.write_text("col1,col2\n")  # Header only, no data
+
+        output = tmp_path / "out.csv"
+
+        monkeypatch.setattr("file_converter.cli.DATA_INPUT_DIR", tmp_path)
+        monkeypatch.setattr("sys.argv", ["convert", str(empty_csv), str(output)])
+
+        import io
+
+        captured_stderr = io.StringIO()
+        original_stderr = sys.stderr
+        sys.stderr = captured_stderr
+
+        try:
+            exit_code = main()
+            stderr_output = captured_stderr.getvalue()
+        finally:
+            sys.stderr = original_stderr
+
+        assert exit_code == 0
+        assert "Warning: Loaded DataFrame is empty" in stderr_output
+
+    def test_drop_empty_shows_feedback(self, tmp_path, monkeypatch, capsys):
+        """Test that --drop-empty shows how many columns were dropped."""
+        from file_converter.cli import main
+
+        # Create CSV with empty columns
+        csv_file = tmp_path / "data.csv"
+        df = pd.DataFrame(
+            {
+                "col1": [1, 2, 3],
+                "empty1": [None, None, None],
+                "col2": ["a", "b", "c"],
+                "empty2": [None, None, None],
+            }
+        )
+        df.to_csv(csv_file, index=False)
+
+        output = tmp_path / "out.csv"
+
+        monkeypatch.setattr("file_converter.cli.DATA_INPUT_DIR", tmp_path)
+        monkeypatch.setattr("sys.argv", ["convert", str(csv_file), str(output), "--drop-empty"])
+
+        exit_code = main()
+
+        assert exit_code == 0
+
+        captured = capsys.readouterr()
+        assert "Dropped 2 empty column(s)" in captured.out
+
+        # Verify actual columns removed
+        result = pd.read_csv(output)
+        assert list(result.columns) == ["col1", "col2"]
+
+    def test_preview_and_drop_empty_combined(self, tmp_path, monkeypatch, capsys):
+        """Test combining --preview and --drop-empty flags."""
+        from file_converter.cli import main
+
+        # Create CSV with empty column
+        csv_file = tmp_path / "data.csv"
+        df = pd.DataFrame({"col1": [1, 2, 3], "empty": [None, None, None], "col2": ["a", "b", "c"]})
+        df.to_csv(csv_file, index=False)
+
+        output = tmp_path / "out.csv"
+
+        monkeypatch.setattr("file_converter.cli.DATA_INPUT_DIR", tmp_path)
+        monkeypatch.setattr(
+            "sys.argv", ["convert", str(csv_file), str(output), "--preview", "--drop-empty"]
+        )
+
+        exit_code = main()
+
+        assert exit_code == 0
+
+        captured = capsys.readouterr()
+        assert "Dropped 1 empty column(s)" in captured.out
+        assert "Preview:" in captured.out
+        assert "Columns: 2" in captured.out  # After dropping
+
+        result = pd.read_csv(output)
+        assert list(result.columns) == ["col1", "col2"]
+
+
+class TestCLIVerboseMode:
+    """Test --verbose flag functionality."""
+
+    def test_verbose_mode_shows_file_info(self, sample_csv, tmp_path, monkeypatch, capsys):
+        """Test that --verbose shows detailed file information."""
+        from file_converter.cli import main
+
+        output = tmp_path / "out.parquet"
+
+        monkeypatch.setattr("file_converter.cli.DATA_INPUT_DIR", sample_csv.parent)
+        monkeypatch.setattr("sys.argv", ["convert", str(sample_csv), str(output), "--verbose"])
+
+        exit_code = main()
+
+        assert exit_code == 0
+
+        captured = capsys.readouterr()
+        # Check for verbose output
+        assert "Input file:" in captured.out
+        assert "File size:" in captured.out
+        assert "Format:" in captured.out
+        assert "Loaded" in captured.out
+        assert "rows" in captured.out
+        assert "columns" in captured.out
+        assert "Memory usage:" in captured.out
+        assert "Column types:" in captured.out
+
+    def test_verbose_with_preview_combined(self, sample_csv, tmp_path, monkeypatch, capsys):
+        """Test combining --verbose and --preview flags."""
+        from file_converter.cli import main
+
+        output = tmp_path / "out.csv"
+
+        monkeypatch.setattr("file_converter.cli.DATA_INPUT_DIR", sample_csv.parent)
+        monkeypatch.setattr(
+            "sys.argv", ["convert", str(sample_csv), str(output), "--verbose", "--preview"]
+        )
+
+        exit_code = main()
+
+        assert exit_code == 0
+
+        captured = capsys.readouterr()
+        # Should show both verbose info and preview
+        assert "Input file:" in captured.out
+        assert "Memory usage:" in captured.out
+        assert "Preview:" in captured.out
+        assert "Column names:" in captured.out
+
+    def test_verbose_short_flag(self, sample_csv, tmp_path, monkeypatch, capsys):
+        """Test that -v short flag works."""
+        from file_converter.cli import main
+
+        output = tmp_path / "out.parquet"
+
+        monkeypatch.setattr("file_converter.cli.DATA_INPUT_DIR", sample_csv.parent)
+        monkeypatch.setattr("sys.argv", ["convert", str(sample_csv), str(output), "-v"])
+
+        exit_code = main()
+
+        assert exit_code == 0
+
+        captured = capsys.readouterr()
+        assert "Input file:" in captured.out
+        assert "Loaded" in captured.out
+
+
+class TestCLIPathTraversal:
+    """Test path traversal warnings."""
+
+    def test_path_outside_data_input_shows_warning(self, tmp_path, monkeypatch, capsys):
+        """Test that reading from outside data/input shows a warning."""
+        from file_converter.cli import main
+
+        # Create file outside data/input
+        external_file = tmp_path / "external.csv"
+        df = pd.DataFrame({"a": [1, 2, 3]})
+        df.to_csv(external_file, index=False)
+
+        output = tmp_path / "out.parquet"
+
+        # Set DATA_INPUT_DIR to different location
+        data_input = tmp_path / "data" / "input"
+        data_input.mkdir(parents=True)
+
+        monkeypatch.setattr("file_converter.cli.DATA_INPUT_DIR", data_input)
+        monkeypatch.setattr("sys.argv", ["convert", str(external_file), str(output)])
+
+        exit_code = main()
+
+        assert exit_code == 0
+
+        captured = capsys.readouterr()
+        # Should show warning about reading from absolute path
+        assert "Note: Reading from absolute path outside data/input" in captured.err
