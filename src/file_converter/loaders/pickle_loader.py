@@ -1,25 +1,31 @@
 import os
-import pandas as pd
 from pathlib import Path
+from typing import cast
+
+import pandas as pd
+
 from .base import BaseLoader
 
 
 class PickleLoader(BaseLoader):
     """
-    Load Pickle format data into a DataFrame.
-    
-    SECURITY WARNING: Pickle files can execute arbitrary code on deserialization.
-    Only load pickle files from trusted sources.
-    
-    Enable via environment variable: UNSAFE_PICKLE=1
+    SECURITY NOTE:
+    Pickle is inherently unsafe. Only enable for trusted sources.
     """
-    
+
     def load(self, path: Path) -> pd.DataFrame:
         if os.getenv("UNSAFE_PICKLE", "0").lower() not in ("1", "true"):
             raise RuntimeError(
-                "Pickle loading is disabled by default (security risk).\n"
-                "Only load pickle files from TRUSTED sources.\n"
-                "To enable, set environment variable: UNSAFE_PICKLE=1"
+                "Pickle loading disabled (unsafe by default). "
+                "Enable via UNSAFE_PICKLE=1 only for trusted files."
             )
-        return pd.read_pickle(path)
 
+        # SECURITY: pickle enabled only via UNSAFE_PICKLE env flag (trusted input gate)
+        obj = pd.read_pickle(path)  # nosec B301
+
+        if not isinstance(obj, pd.DataFrame):
+            raise TypeError(
+                f"Expected pandas DataFrame, got {type(obj).__name__}"
+            )
+
+        return cast(pd.DataFrame, obj)
