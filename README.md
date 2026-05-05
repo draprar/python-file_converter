@@ -1,21 +1,23 @@
 # Tabular Convert
 
-Universal CLI tool for converting tabular data into a unified Pandas DataFrame and exporting it to CSV or Parquet.
+CLI tool for converting tabular data between common formats into a unified Pandas DataFrame and exporting it to CSV or Parquet.
 
 ## Features
 
 - **Input formats**: CSV, Excel (.xlsx, .xls), JSON, Pickle, Parquet
 - **Output formats**: CSV, Parquet (default)
-- **Unified loading pipeline** via pandas
+- **Unified loading pipeline based on Pandas DataFrame**
 - **Data preview** with `--preview`
 - **Clean empty columns** with `--drop-empty`
-- **Project-based directory structure**: `data/input/` and `data/output/`
+- **Default input/output directories**: `data/input/` and `data/output/`
 
 ### ⚠️ Security Note: Pickle Format
 
-Pickle files can execute arbitrary code on deserialization. **Only load pickle files from trusted sources.**
+Pickle files can execute arbitrary code during deserialization.
 
-To enable pickle loading:
+⚠️ They should only be used with trusted local files. Never use with external or user-provided data.
+
+Enable only when necessary:
 ```
 UNSAFE_PICKLE=1 convert data.pkl
 ```
@@ -33,6 +35,8 @@ Editable mode (recommended for development):
 ```
 pip install -e .
 ```
+
+After installation, CLI command becomes available: `convert`
 
 ---
 
@@ -74,10 +78,12 @@ convert --list-formats
 
 ```
 project/
-├── src/file_converter/
+├── src/
+│   └── file_converter/
 ├── tests/
-├── data/input/
-├── data/output/
+├── data/
+│   ├── input/
+│   └── output/
 └── pyproject.toml
 ```
 
