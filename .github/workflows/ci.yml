@@ -8,9 +8,10 @@ on:
 
 jobs:
   lint-and-test:
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
     strategy:
       matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
         python-version: ["3.10", "3.11", "3.12"]
 
     steps:
@@ -22,6 +23,17 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
           cache: 'pip'
+
+      - name: Cache tool state
+        uses: actions/cache@v4
+        with:
+          path: |
+            .mypy_cache
+            .ruff_cache
+            .pytest_cache
+          key: tools-${{ runner.os }}-${{ matrix.python-version }}-${{ hashFiles('**/pyproject.toml') }}
+          restore-keys: |
+            tools-${{ runner.os }}-${{ matrix.python-version }}-
 
       - name: Install dependencies
         run: |
